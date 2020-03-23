@@ -7,6 +7,10 @@
     "description": "An overview of API management, including API registration and API development, and the overall API management lifecycle. An introduction to Axway API management tools."
 }
 
+This is a new sentence for the workshop.
+
+This is a second sentence.
+
 API management is the process of publishing, promoting and managing Application Programming Interfaces (APIs) in a secure, scalable environment. It includes the creation of API consumer support resources that define and document APIs to facilitate easy consumption. API management supports business initiatives to enable easy interaction with customers and partners.
 
 A well-executed API strategy helps create more selling channels, better engage with customers, and offer more value to partners. This practice of doing better business through the effective delivery of APIs enables the API economy. API management uses new Web-Oriented Architecture (WOA) technologies such as REST, JSON, and OAuth instead of traditional Service-Oriented Architecture (SOA) technologies.
