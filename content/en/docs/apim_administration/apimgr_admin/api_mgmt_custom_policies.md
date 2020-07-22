@@ -152,7 +152,7 @@ You can customize a default routing policy by modifying its **Connect To URL** f
 
 For example, under **Settings > Failure > Call connection policy on failure**, you could configure a custom policy with a **Reflect** message filter that modifies the default `HTTP 500` response code to `HTTP 503` when the API Manager runtime cannot connect to a back-end service.
 
-Updating a default routing policy modifies how API Manager manages connection failures globally for all APIs, without needing to modify each API. 
+Updating a default routing policy modifies how API Manager manages connection failures globally for all APIs, without needing to modify each API.
 
 After updating a default routing policy, you do not need to restart the underlying API Gateway, redeploying the updated configuration is sufficient.
 
