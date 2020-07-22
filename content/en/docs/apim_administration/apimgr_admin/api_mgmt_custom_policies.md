@@ -5,6 +5,7 @@
   "date": "2019-09-17",
   "description": "Overview of API Manager custom policies. How to add custom routing policies, enforce global policies, and add fault handler policies."
 }
+
 ## Overview of custom policies
 
 API Manager custom policies are optional policies developed in Policy Studio that can be applied to APIs registered in API Manager. For example, these include custom policies for inbound security, request or response processing, or routing.
@@ -29,21 +30,26 @@ This HTTP client request flow is shown in the following swim lane diagram:
 
 The API Manager policy flow is described as follows:
 
-* When the client makes an API call to API Manager, and the API request is first verified. If the request is not valid or not permitted, API Manager returns an HTTP error such as:
+When the client makes an API call to API Manager, and the API request is first verified. If the request is not valid or not permitted, API Manager returns an HTTP error such as:
 
-  * `HTTP 400 Bad Request`
-  * `HTTP 404 Not Found`
-  * `HTTP 405 Method Not Allowed`
-  * `HTTP 429 Too Many Requests`
-* When the API request has been verified, the optional custom inbound security policy is invoked if configured. This means that the default security no longer applies, and all authentication and access to the API by the API Manager organization must be provided by the custom policy. When inbound security returns `false`, API Manager returns an HTTP error such as:
+* `HTTP 400 Bad Request`
+* `HTTP 404 Not Found`
+* `HTTP 405 Method Not Allowed`
+* `HTTP 429 Too Many Requests`
 
-  * `HTTP 401 Unauthorized`
-  * `HTTP 403 Authentication Failed`
-  * `HTTP 500 Internal Server Error`
-* If an optional request policy is configured, it could perform some customization on the client request, which is controlled by the API Manager administrator, before sending it to the routing policy.
-* The default routing uses a **Connect to URL** filter to route to the back-end service. If you need to customize this, you can configure an custom routing policy instead.
-* The client request is then routed to the back-end service.
-* When the response is returned from the back-end service to API Manager, if an optional response policy is configured, it processes the response and can customize it as needed before the response is returned to the client.
+When the API request has been verified, the optional custom inbound security policy is invoked if configured. This means that the default security no longer applies, and all authentication and access to the API by the API Manager organization must be provided by the custom policy. When inbound security returns `false`, API Manager returns an HTTP error such as:
+
+* `HTTP 401 Unauthorized`
+* `HTTP 403 Authentication Failed`
+* `HTTP 500 Internal Server Error`
+
+If an optional request policy is configured, it could perform some customization on the client request, which is controlled by the API Manager administrator, before sending it to the routing policy.
+
+The default routing uses a **Connect to URL** filter to route to the back-end service. If you need to customize this, you can configure an custom routing policy instead.
+
+The client request is then routed to the back-end service.
+
+When the response is returned from the back-end service to API Manager, if an optional response policy is configured, it processes the response and can customize it as needed before the response is returned to the client.
 
 ### Custom policy execution
 
@@ -53,19 +59,21 @@ The order of execution of the different custom policies is as follows:
 
 The following general rules apply when API Manager custom polices are executed:
 
-* If a filter in a custom policy is aborted, the execution flow is interrupted, and an `HTTP 500 Internal Server Error` is returned to the client. You can add an API Gateway **Generic Error** fault handler filter to a policy, but this will print the stack trace and the execution flow will continue to the next policies.
-* If a filter in a custom policy returns `false`, and there is no false flow defined in the policy, an `HTTP 500 Internal Server Error` is returned to the client. However, in this case, you can customize the false flow and return a custom HTTP code and error message. For example, you could use a **Set Attributes** or **Copy/Modify Attributes** filter to set the following message attributes when your request policy fails:
+If a filter in a custom policy is aborted, the execution flow is interrupted, and an `HTTP 500 Internal Server Error` is returned to the client. You can add an API Gateway **Generic Error** fault handler filter to a policy, but this will print the stack trace and the execution flow will continue to the next policies.
+
+If a filter in a custom policy returns `false`, and there is no false flow defined in the policy, an `HTTP 500 Internal Server Error` is returned to the client. However, in this case, you can customize the false flow and return a custom HTTP code and error message. For example, you could use a **Set Attributes** or **Copy/Modify Attributes** filter to set the following message attributes when your request policy fails:
 
   ```
   request.policy.failure = true
   request.policy.httpcode = 403
   request.policy.error.msg = something happened
   ```
-* You can then use a custom routing policy to control processing and routing to the back-end. For example, you can test the value of the `request.policy.failure` attribute to check if the request policy succeeded, and then route to back-end. If the request policy failed, you can stop processing, and use the values from `request.policy.httpcode` and `request.policy.error.msg` to create a custom message that is reflected to the end user.
-* You can define API Manager fault handler policies at the API Manager, API, and method level. However, if a local fault handler is configured for any custom policies, and an exception occurs in any of these policies, the local fault handler is executed for the exception. The flow then continues as if the exception did not occur, which may not be the desired behavior.
 
-    A workaround is to define a policy that acts as the fault handler using an API Gateway **Policy Shortcut** filter, and for that policy to return `false`. This ensures that any API Manager fault handler policies also get executed. For more details, see [Add API Manager fault handler policies](#add-api-manager-fault-handler-policies).
-* In the case of failure, an `HTTP 500 Internal Server Error` response code is always returned for a SOAP 1.1 response, or an `HTTP 400` and `HTTP 500` for a SOAP 1.2 response with the corresponding SOAP fault code in the SOAP response body.
+You can then use a custom routing policy to control processing and routing to the back-end. For example, you can test the value of the `request.policy.failure` attribute to check if the request policy succeeded, and then route to back-end. If the request policy failed, you can stop processing, and use the values from `request.policy.httpcode` and `request.policy.error.msg` to create a custom message that is reflected to the end user.
+
+You can define API Manager fault handler policies at the API Manager, API, and method level. However, if a local fault handler is configured for any custom policies, and an exception occurs in any of these policies, the local fault handler is executed for the exception. The flow then continues as if the exception did not occur, which may not be the desired behavior. A workaround is to define a policy that acts as the fault handler using an API Gateway **Policy Shortcut** filter, and for that policy to return `false`. This ensures that any API Manager fault handler policies also get executed. For more details, see [Add API Manager fault handler policies](#add-api-manager-fault-handler-policies).
+
+In the case of failure, an `HTTP 500 Internal Server Error` response code is always returned for a SOAP 1.1 response, or an `HTTP 400` and `HTTP 500` for a SOAP 1.2 response with the corresponding SOAP fault code in the SOAP response body.
 
 ### Custom policy types
 
@@ -130,10 +138,10 @@ API Manager provides reserved routing policy templates in Policy Studio under **
 * **Default API Proxy Routing**: API Manager custom routing is based on this template by default.
 * **Default Profile-based Routing**: This is used by the **Default API Proxy Routing** template to process the following outbound authentication profiles:
 
-  * Pass through
-  * HTTP Basic
-  * HTTP Digest
-  * API Key
+    * Pass through
+    * HTTP Basic
+    * HTTP Digest
+    * API Key
 * **Default OAuth-based Routing**: This is used by the **Default API Proxy Routing** template to process the OAuth authentication profile.
 * **Default SSL-based Routing**: This is used by the **Default API Proxy Routing** template to process the SSL authentication profile.
 * **Default URL-based Routing**: This is used by API Gateway only since version 7.6.2.
@@ -142,9 +150,11 @@ API Manager provides reserved routing policy templates in Policy Studio under **
 
 You can customize a default routing policy by modifying its **Connect To URL** filter in Policy Studio. To edit a default policy, select **Policies > Generated Policies > REST APIs > Templates > My Default Routing Policy**, and double-click the **Connect to URL** filter in the policy canvas on the right.
 
-For example, under **Settings > Failure > Call connection policy on failure**, you could configure a custom policy with a **Reflect** message filter that modifies the default `HTTP 500` response code to `HTTP 503` when the API Manager runtime cannot connect to a back-end service. Updating a default routing policy modifies how API Manager manages connection failures globally for all APIs, without needing to modify each API.
+For example, under **Settings > Failure > Call connection policy on failure**, you could configure a custom policy with a **Reflect** message filter that modifies the default `HTTP 500` response code to `HTTP 503` when the API Manager runtime cannot connect to a back-end service.
 
-{{< alert title="Tip" color="primary" >}}After updating a default routing policy, you do not need to restart the underlying API Gateway, redeploying the updated configuration is sufficient.{{< /alert >}}
+Updating a default routing policy modifies how API Manager manages connection failures globally for all APIs, without needing to modify each API. 
+
+After updating a default routing policy, you do not need to restart the underlying API Gateway, redeploying the updated configuration is sufficient.
 
 #### Message attributes
 
@@ -174,11 +184,12 @@ Perform the following steps:
 2. Enter a meaningful **Name** for the new policy (for example, **Custom routing policy for PetStore API**).
 3. Click the new policy in the tree to start configuring its filters. You can do this by dragging the required filters from the filter palette on the right, and dropping them on to the policy canvas. This example includes **Trace** and **Connect to URL** filters:
 
-   ![Create custom routing policy for API key](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_create.png)
+    ![Create custom routing policy for API key](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_create.png)
+
 4. Open the **Connect to URL** filter, and in the **URL** field, enter `${destinationURL}`.
 5. On the **Authentication** tab, the client credential is set to the `${params.authn}` selector by default, but you can enter a different selector or select a credential profile if necessary:
 
-![Connect to URL with Authentication set to selector](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_authn_tab.png)
+    ![Connect to URL with Authentication set to selector](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_authn_tab.png)
 
 #### Configure the list of API Manager routing policies in Policy Studio
 
@@ -190,7 +201,7 @@ Perform the following steps:
 2. Click **Add** on the right, and select the custom routing policy that you created (for example, **Custom routing policy for PetStore API**).
 3. Click **OK**, and click **Save** at the bottom right.
 
-![Configure an API Manager routing policy](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure.png)
+    ![Configure an API Manager routing policy](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure.png)
 
 #### Configure the custom API key routing policy in API Manager
 
@@ -205,10 +216,11 @@ When the custom routing policy has been added to the list of available routing p
    * **API key**: Enter the API key for your API.
    * **Pass credentials as HTTP**: Select **Header** from the list.
 
-   ![Configure API key authentication in API Manager](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_api_key.png)
+    ![Configure API key authentication in API Manager](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_api_key.png)
+
 5. Click **Advanced** on the right, and set **Default method routing** to use your custom routing policy. For example:
 
-   ![Configure custom routing policy in API Manager](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_apimgr.png)
+    ![Configure custom routing policy in API Manager](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_apimgr.png)
 
 #### Invoke the registered API and view the API key in the request
 
@@ -228,19 +240,22 @@ To configure a remote API Gateway instance to act as an OAuth server, perform th
 
 1. Click **Clients** > **Applications** > **New application**.
 2. On the **Authentication** tab, under **OAuth Credentials**, click **New client ID** > **Create**, and use the default settings:
-   ![Create new OAuth credentials for API Manager application](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_credentials.png)
+
+    ![Create new OAuth credentials for API Manager application](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_credentials.png)
+
 3. Click **API** > **Backend** > **New API** to import a back-end API.
 4. Click **API** > **Frontend** > **New API** to create a front-end virtualized API from the back-end API.
 5. Set the **Inbound security** to **OAuth**. This example uses the default setting to obtain the access token from the header:
-   ![API Manager OAuth authorization settings](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_authz.png)
 
-   You must select an OAuth access token store on the **General** tab.
+    ![API Manager OAuth authorization settings](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_authz.png)
+
+    You must select an OAuth access token store on the **General** tab.
 6. Click **Clients** > **Applications** > **API Access** > **Add API** to add the virtualized front-end API to the list of APIs that the application can access.
 7. Click **Settings** > **API Manager Settings** >**General settings**, and ensure that **Enable OAuth scopes per application** is set.
 8. Click **Clients** > **Applications** > **Authentication** > **OAuth Scopes** > **Add scopes**, and select the **resource.READ** and **resource.WRITE** scopes:
-   ![Scope settings](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_scopes.png)
+    ![Scope settings](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_scopes.png)
 
-   You may need to refresh your browser if **OAuth Scopes** are not displayed.
+    You may need to refresh your browser if **OAuth Scopes** are not displayed.
 
 #### Configure the client credentials in Policy Studio
 
@@ -265,14 +280,15 @@ To configure a local API Gateway instance to act as an OAuth client, perform the
    * Select an **OAuth Flow Type** of **Client Credentials**.
    * On the **Scopes** tab, click **Add** to add the **resource.READ** and **resource.WRITE** scopes.
 
-   ![Configure OAuth2 Application Settings in Policy Studio](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_client_credentials_app.png)
+    ![Configure OAuth2 Application Settings in Policy Studio](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_client_credentials_app.png)
 3. On the **Advanced** tab, you must also ensure that **In Authorization Header** is selected for the location of the client ID and client secret:
 
-   ![Configure Advanced OAuth2 Application Settings in Policy Studio](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_client_credentials_app_adv.png)
+    ![Configure Advanced OAuth2 Application Settings in Policy Studio](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_client_credentials_app_adv.png)
+
 4. Click **Save** on the right to save the application.
 5. On the **OAuth2 Provider Settings** tab, enter the IP address of the remote instance in the **Authorization Endpoint** and **Token Endpoint**:
 
-   ![OAuth provider settings](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_provider_settings.png)
+    ![OAuth provider settings](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_oauth_provider_settings.png)
 
 #### Create the custom OAuth routing policy in Policy Studio\
 
@@ -281,12 +297,12 @@ To create a new policy to use as the custom OAuth routing policy in API Manager,
 1. Right-click the **Policies** node in the tree, and select **Add Policy**.
 2. Enter a meaningful **Name** for the new policy (for example, **Custom routing policy with OAuth**).
 3. Click the new policy in the tree to start configuring the filters for this policy. You can do this by dragging the required filters from the filter palette on the right, and dropping them on to the policy canvas. This example includes **Get OAuth Access Token** and **Connect to URL** filters:
-   ![Create custom routing policy using OAuth in Policy Studio](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_create_oauth.png)
+    ![Create custom routing policy using OAuth in Policy Studio](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_create_oauth.png)
 4. In the **Get OAuth Access Token** filter, the client credentials profile is obtained from the message whiteboard by default, so the token should now be available.
 5. Open the **Connect to URL** filter, and in the **URL** field, enter `${destinationURL}`.
 6. On the **Authentication** tab, the client credential is set to the `${params.authn}` selector by default, but you can enter a different selector or select a credential profile if necessary:
 
-![Connect to URL with Authentication set to selector](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_authn_tab.png)
+    ![Connect to URL with Authentication set to selector](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_authn_tab.png)
 
 #### Configure the list of API Manager routing policies and OAuth outbound credentials in Policy Studio
 
@@ -300,7 +316,7 @@ Perform the following steps:
 4. Click **Add** on the right, and select the OAuth client credentials that you created (for example, **Test OAuth**).
 5. Click **OK**, and click **Save** at the bottom right.
 
-![Configure API Manager OAuth Outbound Credentials in Policy Studio](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_oauth.png)
+    ![Configure API Manager OAuth Outbound Credentials in Policy Studio](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_oauth.png)
 
 #### Configure the custom OAuth routing policy in API Manager
 
@@ -371,13 +387,14 @@ Perform the following steps:
 2. Enter a meaningful **Name** for the new policy (for example, **Custom SSL routing policy**).
 3. Click the new policy in the tree to start configuring its filters. You can do this by dragging the required filters from the filter palette on the right, and dropping them on to the policy canvas. You must include a **Connect to URL** filter for SSL:
 
-   ![Create Custom Routing Policy for SSL](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_create_ssl.png)
+    ![Create Custom Routing Policy for SSL](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_create_ssl.png)
+
 4. In the **Connect to URL** filter, you must enter a **Name** of `apimanager.outbound.ssl`, which is only used for API Manager.
 5. In the **URL** field, enter `${destinationURL}`.
 6. On the **SSL** > **Advanced (SSL)** tab specifies TLS version 1.2 with strong FIPS-compliant ciphers by default for SSL/TLS connections, but you can modify these settings to suit your requirements.
 7. On the **Authentication** tab, the client credential is not set by default.
 
-   ![Connect to URL with SSL settings](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_ssl_tab.png)
+    ![Connect to URL with SSL settings](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_ssl_tab.png)
 
 #### Add the custom SSL routing policy to Policy Studio
 
@@ -389,7 +406,7 @@ Perform the following steps:
 2. Click **Add** on the right, and select the custom routing policy that you created (for example, **Custom SSL Routing Policy**).
 3. Click **OK**, and click **Save** at the bottom right.
 
-![Configure a Custom SSL Routing Policy](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_ssl.png)
+    ![Configure a Custom SSL Routing Policy](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_ssl.png)
 
 #### Configure the custom SSL routing policy in API Manager
 
@@ -407,10 +424,10 @@ When the custom routing policy has been added to the list of available routing p
    * **PFX/P12 password**: Enter the password for the SSL client certificate.
    * **Trust all certificates in chain**: Ensure this setting is selected.
 
-   ![Configure SSL Authentication in API Manager](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_apimgr_ssl.png)
+    ![Configure SSL Authentication in API Manager](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_apimgr_ssl.png)
 8. Click **Advanced** on the right, and set **Default method routing** to use your custom SSL routing policy. For example:
 
-   ![Configure custom SSL routing policy in API Manager](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_apimgr_ssl_policy.png)
+    ![Configure custom SSL routing policy in API Manager](/Images/docbook/images/api_mgmt/api_mgmt_custom_policy_configure_apimgr_ssl_policy.png)
 
 #### Invoke the registered API and test SSL authentication
 
